@@ -2,6 +2,8 @@ package dave.dev.authapi.model;
 
 import jakarta.persistence.*;
 
+import java.util.Set;
+
 @Entity
 @Table(name = "users")
 public class User {
