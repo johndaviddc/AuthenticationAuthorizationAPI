@@ -22,22 +22,28 @@ public class AuthController {
     private final UserService userService;
 
     @Autowired
-    public AuthController(AuthenticationManager authenticationManager, JwtTokeProvider jwtTokeProvider, UserService userService) {
+    public AuthController(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider, UserService userService) {
         this.authenticationManager = authenticationManager;
-        this.jwtTokenProvider = jwtTokeProvider;
+        this.jwtTokenProvider = jwtTokenProvider;
         this.userService = userService;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody User loginUser)
+    public ResponseEntity<String> login(@RequestBody User loginUser) {
         try {
             String username = loginUser.getUsername();
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, loginUser.getPassword()));
             UserDetails userDetails = userService.loadUserByUsername(username);
-            String token = jwtTokenProvider.createToken(username, UserDetails.getAuthorities());
+            String token = jwtTokenProvider.createToken(username, userDetails.getAuthorities());
             return ResponseEntity.ok(token);
-    } catch (AuthenticationException e) {
+        } catch (AuthenticationException e) {
             return ResponseEntity.status(401).body("Invalid username or password");
+        }
     }
 
+    @PostMapping("/register")
+    public ResponseEntity<User> register(@RequestBody User user) {
+        User registeredUser = userService.registerUser(user.getUsername(), user.getPassword(), user.getRoles());
+        return ResponseEntity.ok(registeredUser);
+    }
 }
