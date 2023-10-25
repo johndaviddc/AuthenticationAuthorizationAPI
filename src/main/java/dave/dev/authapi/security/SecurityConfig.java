@@ -11,38 +11,35 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig extends WebSecurityConfigurer {
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-   private final UserDetailsService userDetailsService;
-   private final PasswordEncoder passwordEncoder;
+    private final CustomUserDetailsService customUserDetailsService;
+    private final JwtTokenProvider jwtTokenProvider;
 
-   public SecurityConfig(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
-       this.userDetailsService = userDetailsService;
-       this.passwordEncoder = passwordEncoder;
-   }
+    @Autowired
+    public SecurityConfig(CustomUserDetailsService customUserDetailsService, JwtTokenProvider jwtTokenProvider) {
+        this.customUserDetailsService = customUserDetailsService;
+        this.jwtTokenProvider = jwtTokenProvider;
+    }
 
-   @Override
+    @Override
     protected void configure(HttpSecurity http) throws Exception {
-       http
-               .authorizeRequests()
-               .antMatchers("/api/auth/**").permitAll()
-               .antMatchers("/api/roles**").hasRole("ADMIN")
-               .anyRequest().authenticated()
-               .and()
-               .httpBasic();
+        http.cors().and().csrf().disable()
+                .authorizeRequests()
+                .antMatchers("/api/auth/**").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/roles/create").hasRole("ADMIN")
+                .anyRequest().authenticated()
+                .and()
+                .apply(new JwtConfigurer(jwtTokenProvider));
+    }
 
-       http.csrf().disable();
-       http.cors();
-   }
+    @Override
+    public void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(customUserDetailsService);
+    }
 
-   @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-       auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
-   }
-
-   @Bean
-    public JwtTokenFilter jwtTokenFilter() {
-       return new JwtTokenFilter();
-   }
-
+    @Bean
+    public JwtTokenProvider jwtTokenProvider() {
+        return new JwtTokenProvider();
+    }
 }
