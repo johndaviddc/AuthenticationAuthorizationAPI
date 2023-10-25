@@ -1,6 +1,7 @@
 package dave.dev.authapi.controller;
 
 import dave.dev.authapi.model.User;
+import dave.dev.authapi.security.JwtTokenProvider;
 import dave.dev.authapi.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
